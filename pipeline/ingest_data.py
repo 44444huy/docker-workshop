@@ -7,6 +7,9 @@ import click
 from tqdm import tqdm
 
 
+prefix = 'https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/'
+
+
 dtype = {
     "VendorID": "Int64",
     "passenger_count": "Int64",
@@ -32,48 +35,46 @@ parse_dates = [
 ]
 
 
+
+
 @click.command()
-@click.option('--pg-user', required=True)
-@click.option('--pg-pass', required=True)
-@click.option('--pg-host', required=True)
-@click.option('--pg-port', default=5432, type=int)
-@click.option('--pg-db', required=True)
-@click.option('--table-name', required=True)
-@click.option('--url', required=True)
-def main(pg_user, pg_pass, pg_host, pg_port, pg_db, table_name, url):
+@click.option('--pg-user', default='root', help='PostgreSQL user')
+@click.option('--pg-pass', default='root', help='PostgreSQL password')
+@click.option('--pg-host', default='localhost', help='PostgreSQL host')
+@click.option('--pg-port', default=5432, type=int, help='PostgreSQL port')
+@click.option('--pg-db', default='ny_taxi', help='PostgreSQL database name')
+@click.option('--target-table', default='yellow_taxi_data', help='Target table name')
+def run(pg_user, pg_pass, pg_host, pg_port, pg_db, target_table):
 
     engine = create_engine(
         f'postgresql+psycopg://{pg_user}:{pg_pass}@{pg_host}:{pg_port}/{pg_db}'
     )
 
     df_iter = pd.read_csv(
-        url,
+        prefix + 'yellow_tripdata_2021-01.csv.gz',
         dtype=dtype,
         parse_dates=parse_dates,
         iterator=True,
-        chunksize=100_000
+        chunksize=100000
     )
 
     first = True
-
     for df_chunk in tqdm(df_iter):
         if first:
             df_chunk.head(0).to_sql(
-                name=table_name,
+                name=target_table,
                 con=engine,
                 if_exists='replace'
             )
             first = False
-            print("✅ Table created")
+            print("Table created")
 
         df_chunk.to_sql(
-            name=table_name,
+            name=target_table,
             con=engine,
             if_exists='append'
         )
 
         print("Inserted:", len(df_chunk))
-
-
 if __name__ == "__main__":
-    main()
+    run()

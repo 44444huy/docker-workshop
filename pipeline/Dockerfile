@@ -1,14 +1,19 @@
-# base Docker image that we will build on
-FROM python:3.13.11-slim
+FROM python:3.13-slim
 
-# set up our image by installing prerequisites; pandas in this case
-RUN pip install pandas pyarrow
+# Cài dependencies
+RUN pip install \
+    pandas \
+    pyarrow \
+    sqlalchemy \
+    psycopg[binary] \
+    click \
+    tqdm
 
-# set up the working directory inside the container
+# Thư mục làm việc trong container
 WORKDIR /app
-# copy the script to the container. 1st name is source file, 2nd is destination
-COPY pipeline.py pipeline.py
 
-# define what to do first when the container runs
-# in this example, we will just run the script
-ENTRYPOINT ["python", "pipeline.py"]
+# Copy file ingest
+COPY ingest_data.py ingest_data.py
+
+# Khi docker run → chạy script này
+ENTRYPOINT ["python", "ingest_data.py"]

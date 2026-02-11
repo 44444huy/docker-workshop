@@ -51,15 +51,19 @@ services:
   kestra:
     image: kestra/kestra:v1.1
     pull_policy: always
-    # Note that this setup with a root user is intended for development purpose.
-    # Our base image runs without root, but the Docker Compose implementation needs root to access the Docker socket
-    # To run Kestra in a rootless mode in production, see: https://kestra.io/docs/installation/podman-compose
     user: "root"
     command: server standalone
+
     volumes:
       - kestra_data:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock
       - kestra_tmp:/tmp/kestra-wd
+
+    env_file:
+      - .env_encoded
+
+    restart: always
+
     environment:
       KESTRA_CONFIGURATION: |
         datasources:
@@ -71,7 +75,7 @@ services:
         kestra:
           server:
             basicAuth:
-              username: "admin@kestra.io" # it must be a valid email address
+              username: "admin@kestra.io"
               password: Admin1234!
           repository:
             type: postgres
@@ -85,10 +89,11 @@ services:
             tmpDir:
               path: /tmp/kestra-wd/tmp
           url: http://localhost:8080/
+
     ports:
       - "8080:8080"
       - "8081:8081"
+
     depends_on:
       kestra_postgres:
         condition: service_started
-    

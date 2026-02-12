@@ -63,7 +63,6 @@ services:
       - .env_encoded
 
     restart: always
-
     environment:
       KESTRA_CONFIGURATION: |
         datasources:
@@ -85,11 +84,15 @@ services:
               basePath: "/app/storage"
           queue:
             type: postgres
-          tasks:
+           
             tmpDir:
               path: /tmp/kestra-wd/tmp
           url: http://localhost:8080/
-
+          ai:
+            type: gemini
+            gemini:
+              model-name: gemini-2.5-flash
+              api-key: ${GEMINI_API_KEY}
     ports:
       - "8080:8080"
       - "8081:8081"
